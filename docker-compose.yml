@@ -1,0 +1,27 @@
+version: '3'
+services:
+  postgresdb:
+    image: postgres    
+    ports:
+      - "5432:5432"
+    volumes:      
+      - ./pg-scripts/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+      - ./pg-scripts/V1_schema.sql:/docker-entrypoint-initdb.d/V1_schema.sql
+      - ./pg-scripts/V2_data.sql:/docker-entrypoint-initdb.d/V2_data.sql
+    environment: 
+      POSTGRES_PASSWORD: postgres  
+      POSTGRES_USER: postgres
+      POSTGRES_DB: slack  
+  jar:
+     image: openjdk:8-jre-alpine
+     ports:
+      - "8080:8084"
+     environment:               
+        - SPRING_APPLICATION_NAME=WTF
+        - SPRING_PROFILE_ACTIVE=postgresql
+        - POSTGREDB_SERVER_HOST=postgresdb                     
+     volumes:      
+      - ./build/libs/spring-jpa-postgres-0.0.1-SNAPSHOT.jar:/app.jar    
+     entrypoint: [ "sh", "-c", "java -jar /app.jar"]
+     depends_on:
+      - postgresdb            
